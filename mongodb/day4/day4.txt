@@ -1,0 +1,501 @@
+课程:MongoDB
+日期:2018年11月28日
+进度:day4
+姓名:王丹波
+
+========== 主要内容 ==========
+1)固定集合: 限制集合的大小(理解,应用)
+2)文件存储: 将文件内容存入数据库(重点,应用)
+3)pymongo: 使用Python语言访问数据库
+           对数据库进行操作(重点,应用)
+
+回顾之前的内容
+1. 创建集合
+   acct: 账户集合
+      acct_no: 账号
+      acct_name: 户名
+      acct_type: 类型
+      balanc: 余额
+1) 插入单笔
+db.acct.insert({
+    acct_no:"622345111111",
+    acct_name:"Jerry",
+    acct_type:1,
+    balance:1234.56
+})
+
+2)插入多笔
+db.acct.insert([
+    {
+        acct_no:"622345222222",
+        acct_name:"Tom",
+        acct_type:1,
+        balance:2000
+    },
+    {
+        acct_no:"622345333333",
+        acct_name:"Dokas",
+        acct_type:2,
+        balance:5000
+    }
+])
+
+3)save插入
+db.acct.save({
+        acct_no:"622345444444",
+        acct_name:"Emma",
+        acct_type:2,
+        balance:10000
+})
+
+4)查找
+    带单个条件查找
+    db.acct.find({acct_no:"622345111111"})
+    select * from acct 
+       where acct_no = '622345111111'
+
+    带多个条件的查询
+    db.acct.find({
+        acct_no:"622345111111",
+        acct_name:"Jerry"
+    })
+
+    查找金额小于5000元的账户
+    db.acct.find({balance:{$lt:5000}})
+
+    $and实现多个条件组合查询
+    db.acct.find({
+      $and:[{acct_type:1},{balance:1234.56}]
+    })
+
+    修改
+    db.acct.update(
+        {acct_no:"622345111111"},
+            {$set:{balanc:234.56}
+        }
+    )
+
+    乘法修改器
+    db.acct.update(
+        {acct_no:"622345444444"},
+        {$mul:{balance:1.02}}
+    )
+    
+5)上次课程内容:
+  查找: distinct  去重
+    e.g.  db.acct.distinct("acct_type")
+
+    limit    显示前N笔数据
+    e.g.  db.acct.find().limit(2)
+
+    count    统计笔数
+    e.g.  db.acct.find({acct_type:1}).count()
+
+    sort     排序
+    e.g. db.acct.find().sort({balance:-1})
+
+  删除
+    db.collection.remove(query, justOne)
+      query: 筛选条件
+      justOne:是否删除一条,布尔值
+    db.acct.remove({acct_no:"622345444444"}, true)
+
+  修改
+    db.collection.update(query, update, upsert, multi)
+       query: 筛选条件
+       update: 修改内容
+       upsert: 查询不到数据时,是否执行插入
+       mult: 是否修改多条
+    
+    db.acct.update(
+        {acct_no:"622345333333"},
+        {$set:{
+            balance:0,
+            acct_type:2,
+            close_date:new Date()
+        }},
+        false,false)
+
+    $set: 修改域
+    $unset: 删除域
+    $rename: 修改域名称
+    $inc: 加法修改器
+    $min: 用值的值进行比较,取较小的
+    $max: 用值的值进行比较,取较大的
+    $push/pushAll: 向数组添加值
+    $pull/pullAll: 从数组取出值
+    $each: 对多个值逐一取出,执行操作
+    $addToSet: 向数组添加数据,不和已有数据重复
+
+  时间类型:
+    - 计算中时间表示法: 整数,
+      表示从1970-01-01 00:00:00到当前时间点的描述/毫秒数
+    - Date()   取当前系统时间,字符串
+    - new Date()  生成当前时间,对象
+    - ISODate()   生成当前时间,对象
+    - ISODate().toLocaleString()
+
+  null类型: 字段不存在,值没有被设置
+
+  内嵌文档:
+    - 某个域的值还是一个文档
+    - 饮用方式: outer_doc.inner_doc.filed_name
+
+  索引:
+    - 概念: 键值和所在的文档位置的对照关系
+    - 作用: 提高数据查询效率(通过避免全表扫描)
+    - 索引的使用
+      - 创建: createIndex(key, option)
+      - 查看索引: db.collection.getIndexes()
+      - 删除索引: db.collection.dropIndex(name)
+      - 唯一索引: 
+         db.collection.createIndex{{acct_no}, {unique:true}}
+
+  聚合: aggregate
+  $group: 分组统计
+  $sum: 对某个域求和
+  $max:
+  $min:
+  $avg: 求平均值
+  $project: 从集合查询制定的域
+  $match: 数据过滤
+  $sort:
+  管道聚合: 一个操作处理完成后,将结果送入下一个操作处理
+    db.acct.aggregate({$match:{acct_type:1}},
+    {$sort:{acct_no: -1}}
+    )
+
+今天的内容
+1. 固定集合: 
+   - 有着固定大小的集合(大小, 笔数)
+   - 我们可以把固定集合想象成一个环形队列
+     当空间用完后,再插入的数据会覆盖头部的数据
+   - 应用:
+     临时缓存
+     日志
+   - 优点
+     插入速度快,顺序查找速度快
+     能够淘汰早期的数据
+     能够控制集合的大小
+   - 创建固定集合
+     - 语法:db.createCollection(collection,
+       {capped:true, size:10000, max:3}
+     )
+        collection: 集合名称
+        capped: 表示创建固定集合
+        size: 集合的大小,单位字节(Byte)
+        max: 最多存放多少文档
+
+      - 示例:
+        第一步:创建日志集合
+        db.createCollection('log', 
+         {capped:true, size:10000, max:3}
+        )
+        第二步:插入3笔数据(前面三笔插入成功)
+        db.log.insert({
+            oper_date: new Date(),
+            user_id:"Tom",
+            oper: "insert"
+            })
+        第三步:插入第4笔数据(覆盖一笔之前的数据)
+
+2. 文件存储
+1) 文件存储的方式
+    - 数据库中只存储文件路径,文件存储某个目录下
+      优点: 占用数据库空间较少
+      缺点: 存储路径和实际路径不一致时,文件丢失
+
+    - 将整个文件数据库存入数据库 
+      优点: 数据库和文件绑定存在
+      缺点: 占用较多数据库空间
+2) GridFS
+    -GridFS: 把文件存储到Mongo集合中的一种方式
+    -通常用来存储二进制文件,如图片,音乐,视频
+    -存储原理:将文件分解成多个小的片段(chunk)存储
+             一个片段大小一般为256K
+             每个片段作为一个文档存储在chunks集合中
+    -GridFS用两个集合来存储文件
+      - fs.file: 存储文件的元信息
+      - fs.chunks: 存储文件的实际内容
+    - 优缺点:
+      优点:能存储很大的文件
+          在分布式环境下,能自动同步文件元数据
+          仅加载文件部分内容即可读取,不必将整个文件加载到内存
+      缺点:
+          读取效率比从磁盘低,所以最好存储16M以上的文件
+          只能整体替换,无法局部更新
+    示例: 
+       第一步: 准备二进制文件
+              (将一个tar.gz文件复制为tmp.tar.gz)
+       第二步: 将文件存入mongodb
+          mongofiles -d gridfs put tmp.tar.gz
+       第三步: 登录mongo, 进入gridfs数据库
+              检查是否保存(在fs.file集合下查看文件名,大小)
+       第四步: 删除本地文件
+           rm tmp.tar.gz
+       第五步: 从数据库 提取文件
+           mongofiles -d gridfs get tmp.tar.gz
+           提取成功后,该文件被存储到本地目录
+
+           参数: -d 指定存取的数据库
+                 put 存文件
+                 get 取文件
+                 tmp.tar.gz  文件路径
+
+3. pymongo: 使用python操作MongoDB
+1) 安装: 
+   第一步: pip3 install pymongo
+   第二步: 验证安装
+          进入Python交互模式,输入import pymongo
+          如果不报错,则说明安装成功
+
+2) pymongo访问数据库的步骤
+   第一步:创建mongodb的连接对象
+   第二步:获取数据库对象
+   第三步:获取集合对象
+   第四步:执行操作语句
+   第五步:关闭连接
+
+   示例1: 显示数据库服务器上所有的库
+   # show_dbs.py
+# 显示mongo服务器上所有的数据库
+import pymongo
+
+# 1. 建立连接  MongoClient
+# conn = pymongo.MongoClient(
+#            "mongodb://localhost:27017")
+conn = pymongo.MongoClient("localhost", 27017)
+
+# 2. 获取数据库列表
+#dblist = conn.list_database_names()
+dblist = conn.database_names()
+for db in dblist:  # 遍历, 打印
+    print(db)
+
+# 3. 关闭数据库
+conn.close()
+print("数据库已关闭")
+
+示例2: 查询
+# find.py
+# 查询
+import pymongo
+
+# 1. 连接数据库
+conn = pymongo.MongoClient("localhost",27017)
+# 2. 列出所有数据库
+dblist = conn.database_names()
+db = "test"
+# 判断库是否存在
+if db in dblist:
+    mydb = conn["test"] #获取数据库对象 
+    mycol = mydb["acct"] #选择集合
+    # 查询, 打印
+    #docs = mycol.find({}, {"_id":0})
+    docs = mycol.find({"acct_no":"622345111111"},
+                  {"_id":0})
+    for doc in docs:
+        print(doc)
+else:
+    print("not found collection:", db)
+conn.close()
+
+插入
+  - insert()   插入一条或多条
+  - insert_one()  插入一条
+  - insert_many()  插入多条
+  - save()   如果id存在则覆盖,不存在则插入
+
+示例3: 单笔插入
+# insert.py
+# Mongodb插入操作
+import pymongo
+
+# 1. 建立连接
+conn = pymongo.MongoClient("localhost",27017)
+
+# 2. 列出所有数据库
+dblist = conn.database_names()
+db = "test"
+if db in dblist:
+    mydb = conn["test"]  # 获取数据库对象
+    mycol = mydb["acct"] # 获取集合对象
+    # 定义插入的内容
+    mydict = {
+        "acct_no": "622345888888",
+        "acct_name": "David",
+        "balance":3333.33
+    }
+    ret = mycol.insert_one(mydict)
+    print(ret.inserted_id) # 打印新插入的ID号
+else:
+    print("db not found")
+conn.close()
+
+示例4:
+# insert_many.py
+# Mongodb插入多行操作
+import pymongo
+
+# 1. 建立连接
+conn = pymongo.MongoClient("localhost",27017)
+
+# 2. 列出所有数据库
+dblist = conn.database_names()
+db = "test"
+if db in dblist:
+    mydb = conn["test"]  # 获取数据库对象
+    mycol = mydb["acct"] # 获取集合对象
+    # 定义插入的内容, 多笔传入列表参数
+    mydict = [
+      {"acct_no":"622345777", "acct_name":"Kevin"},
+      {"acct_no":"622345666", "acct_name":"Emma"}
+    ]
+    ret = mycol.insert_many(mydict)# 插入多笔
+    print(ret.inserted_ids) # 打印新插入的ID号
+else:
+    print("db not found")
+conn.close()
+
+修改: 
+  - update(query, update, 
+          upsert=False, multi=False)
+      query: 筛选条件
+      update: 修改内容
+      upsert: 是否执行插入
+      multi: 是否修改多行
+
+  代码:
+  # update.py
+# 修改数据
+import pymongo
+
+# 连接数据库
+conn = pymongo.MongoClient("localhost",27017)
+# 列出所有数据库
+dblist = conn.database_names()
+db = "test"  # 操作的数据库
+if db in dblist:
+    mydb = conn["test"] # 获取数据库对象
+    mycol = mydb["acct"] # 获取集合对象
+    # 修改
+    myquery = {"acct_no":"622345111111"}
+    new_values = {"$set": {"balance":99.99}}
+    ret = mycol.update_one(myquery, new_values)
+    print("修改笔数:%d" % ret.modified_count)
+else:
+    print("db not found")
+
+conn.close()
+
+删除:delete_one, delete_many
+   - delete_one(query)
+      query: 筛选条件
+    
+  代码:
+# delete.py
+# 删除数据
+import pymongo
+# 连接数据库
+conn = pymongo.MongoClient("localhost",27017)
+# 列出所有数据库
+dblist = conn.database_names()
+db = "test"
+if db in dblist:
+    mydb = conn["test"] # 获取数据库对象
+    mycol = mydb["acct"] # 获取集合对象
+    myquery = {"acct_no":"622345666",
+                "acct_name":"Emma"}
+    ret = mycol.delete_one(myquery)
+    print("删除笔数:%d" % ret.deleted_count)
+else:
+    print("db not found")
+conn.close()
+
+  示例:利用pymongo存取文件
+  - bson.binary: 可以将字符串转换为二进制存储
+
+  第一步:查找一张jpg格式的图片
+        cd ~
+        find . -name *.jpg
+        将图片复制到用户主目录:cp 文件路径 ~/
+  第二步:编写代码
+  # file_oper.py
+# 将文件存入mongo, 并且取出
+from pymongo import MongoClient
+import bson.binary
+
+from_img = "flower.jpg"  # 原始图片名称
+to_img = "new_flower.jpg"# 生成的新图片名称
+
+def save_img(myset):
+    # 存储图片
+    f = open(from_img, "rb") # 只读,二进制方式打开
+    data = f.read()  # 读文件内容
+    # 将data转换为mongodb的存储格式
+    content = bson.binary.Binary(data)
+
+    myset.insert({
+        "filename":from_img,  # 文件名
+        "data":content  # 文件数据
+    })
+    print("save ok")
+    return
+
+def get_img(myset): # 从mongodb读取图片
+    img = myset.find_one({"filename":"flower.jpg"})
+    with open(to_img, "wb") as f:#打开存入文件
+        f.write(img["data"])#将data域写入文件
+    print("save new img ok")
+    return
+
+# 连接数据库,取得数据库对象,取得集合对象
+conn = MongoClient("localhost", 27017)
+db = conn.gridfs  # 取得数据库对象
+myset = db.image  # 取得集合对象
+
+#save_img(myset)  # 存储图片函数
+get_img(myset)    # 读取图片函数
+
+conn.close()
+        
+作业:
+1)创建订单集合(名称orders),包含的域有:
+  order_id: 订单编号, 字符串
+  cust_name: 订单所属客户, 字符串
+  order_date: 下单时间,Date类型
+  status: 订单状态, 整数
+  order_detail: 订单明细, 文档数组
+    product_id: 商品编号, 字符串
+    product_name: 商品名称, 字符串
+    amt: 商品数量, 整数
+    price: 单价, 浮点数
+2)插入3笔订单数据,每个订单至少包含1件商品
+  至少有一个订单包含多件商品(注意数据规范性)
+3)编写下列语句
+  a)查找所有状态为1的订单
+  b)查找某个客户状态为1的订单(cust_name,status)
+  c)查找某个时间点以后下单的订单
+  d)统计订单笔数
+  e)修改某个订单的状态
+  f)为所有订单添加一个域:
+    支付状态(payment_status),整数
+  g)查询所有订单中,商品编号为"P0001"的订单
+  h)在订单集合的订单编号(order_id)域上创建升序索引
+  i)为某个订单增加备注信息(要求为字符串数组)
+  j)删除一笔无效订单(status判断,具体值自己定)
+
+  明天课程准备:
+    github或https://gitee.com/上申请一个账号
+
+
+
+
+
+
+
+
+
+
+
+

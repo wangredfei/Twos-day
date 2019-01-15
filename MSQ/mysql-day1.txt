@@ -1,0 +1,387 @@
+赵蒙蒙
+	g-zhaomm@tedu.cn
+1. MySQL概述
+	1. 什么是数据库
+		数据库就是存储数据的仓库
+	2. 都有哪些公司在使用数据库?
+		电商公司,游戏公司,金融机构,政府部门...
+	3. 提供数据库服务的软件
+		1. 软件分类
+			MySQL,Oracle,SQL-Server,DB2,MongoDB,MariaDB...
+		2. 生产环境中,如何选择使用哪一种数据库软件
+			1. 是否开源
+				1. 开源软件 : MySQL,MongoDB,MariaDB
+				2. 商业软件 : Oracle,DB2,SQL-Server
+			2. 是否跨平台
+				1. 不跨平台 : SQL-Server
+				2. 跨平台 : ...
+			3. 公司类型
+				1. 商业软件 : 政府机构,金融机构
+				2. 开源软件 : 游戏公司,电商公司,论坛和贴吧网站...
+	4. MySQL 数据库特点:
+		1. 关系型数据库
+			1. 关系型数据库的特点
+				1. 数据以行和列(表格)形式存储
+				2. 表中每一行叫一条记录,每一列叫一个字段
+				3. 表与表之间的逻辑关联叫关系
+			2. 实例
+				1. 关系型数据库存储数据:
+					表1 学生信息表
+						姓名	年龄	班级
+						星矢	25		三班
+						水冰月	25		六班
+					表2 班级信息表
+						班级 	班主任
+						三班	大空翼
+						六班	松人
+				2. 非关系型数据库存储数据
+					{"姓名":"星矢","年龄":"25","班级":"三班","班主任":"大空翼"}
+					{"姓名":"水冰月","年龄":"25","班级":"六班","班主任":"松人"}
+		2. 跨平台
+			可以在Windows,Linus,Unix上运行
+		3. 支持多种编程语言
+			Python,Java,PHP...
+	5. 数据库软件,数据库,数据仓库的概念
+		1. 数据库(database 简写DB,db)
+			储存在计算机内的有组织,可共享的数据集合
+		2. 数据库软件(数据库管理系统)
+			一个软件,看得见,可操作的工具,可以通过SQL语句操作数据库(SQL: 结构化查询语句)
+		3. 数据仓库(Data WareHouse,简写 DW,DWH)
+			数据量要比数据库大的多,主要用于数据分析和数据挖掘
+			et :
+				数据库 : 购物车表,用户信息表
+				数据仓库 : 分析哪个时间段用户的访问量最大,哪个用户一年中购物最多....
+2. MySQL安装
+	1. Ubuntu安装MySQL服务(命令行安装)
+		1. 安装服务端
+			sudo apt-get install mysql-server
+		2. 安装客户端
+			sudo apt-get install mysql-client
+		3. Ubuntu安装软件
+			1. sudo apt-get update
+				访问源列表中的每个网址,读取软件列表,保存到本地/var/lib/apt/lists
+			2. sudo apt-get upgrade
+				把本地已安装软件与刚下载的软件列表进行比对,如果发现已安装软件的版本低,则更新软件
+			3. sudo apt-get -f install
+				修复依赖关系
+	2. Windows安装MySQL
+		1. 下载安装包
+			mysql-installer***5.7.24.msi
+		2. 按照安装教程安装
+	3. Mac 安装MySQL
+		1. 下载安装包 (dmg -> pkg)
+		2. 设置环境变量
+			1. vi .base_profile
+			2. 在末尾写入如下内容,保存并退出
+				export PATH=${PATH}:/usr/local/mysql/bin
+				或者
+				PATH="$PATH":/usr/local/mysql/bin
+			3. 在命令行下 $ source .base_profile
+			4. 登录测试
+				mysql -uroot -p
+3. 启动和连接数据库
+	1. 启动服务端(终端下)
+		1. 查看MySQL状态
+			sudo /etc/init.d/mysql status
+		   启动MySQL服务
+		   	sudo /etc/init.d/mysql start | stop | restart
+	2. 客户端连接
+		1. 命令格式 :
+			mysql -h主机地址 -u用户名 -p密码
+			et :
+				mysql -hlocalhost -uroot -p123456
+		2. 本地连接可以省略-h选项
+			mysql -uroot -p123456
+4. 基本SQL命令
+	1. SQL命令的使用规则
+		1. SQL命令不区分大小写,但是区分中英文的标点符号,一律使用英文标点符号 "" : 空格
+		2. 每条命令以;结尾
+		3. 使用\c终止当前命令的执行
+	2. 库的管理
+		1. 库的基本操作
+			1. 查看已有库
+				show databases;
+			2. 创建库
+				create database 库名;
+				创建的同时指定字符集
+				create database 库名 character set utf8;
+			3. 查看创建库的语句(字符集)
+				show create database 库名;
+			4. 查看当前所在库
+				select database();
+			5. 切换/选择库
+				use 库名;
+			6. 查看当前库中所有的表
+				show tables;
+			7. 删除库
+				drop database 库名;
+		2. 库名的命名规则
+			1. 库名由数字,字母,下划线组成,不能使用纯数字
+			2. 库名区分大小写
+				et :
+				  1. SQL命令不区分大小写
+						CREATE DATABASE TESTDB;
+						等价于
+						create database TESTDB;
+				  2. 库名区分大小写
+				  		create database TESTDB;
+				  		create database Testdb;
+				  		分别创建了两个库 :
+				  			TESTDB
+				  			Testdb
+			3. 不能使用特殊字符和MySQL的关键字
+		练习 :
+			1. 创建库studb,指定字符集为utf8
+				create database studb character set utf8;
+			2. 进入studb库中
+				use studb;
+			3. 查看当前所在库
+				select database();
+			4. 创建库studb2,指定字符集为latin1
+				create database studb2 character set latin1;
+			5. 进入studb2中
+				use studb2;
+			6. 查看当前库的字符集
+				show create database studb2;
+			7. 删除创建好的两个库
+				drop database studb;
+				drop database studb2;
+	3. 表记录管理
+		1. 表的管理
+			1. 表的基本操作
+				1. 创建表
+					create table 表名(字段名 数据类型,字段2 数据类型,...);
+					创建的同时制定字符集
+					create table 表名(字段1 数据类型,字段2 数据类型,...)character set utf8;
+				2. 查看已有表的字符集
+					show create table 表名;
+				3. 查看表结构
+					desc 表名;
+				4. 删除表
+					drop table 表名;
+				练习 :
+					1. 创建库 studb
+					2. 在库中创建stuinfo表,指定字符集为utf8,指定字段 id name age;
+					3. 查看创建表stuinfo的语句
+					4. 查看表结构
+					5. 在库中创建score表,字段有id name score;
+					6. 查看库中所有表;
+						show tables;
+					7. 查看score表结构
+					8. 删除表,删除库
+				注意 :
+					1. 如果涉及多个库切换操作表,一定不要忘了切换数据库
+					2. 所有的数据在数据库中都是以文件的形式存储的,存放目录为:
+						/var/lib/mysql
+		2. 表记录管理(操作数据)
+			1. 插入数据 (insert)
+				1. insert into 表名 values(值1),(值2),...;
+					注意 : ()中实际代表的是一行,一条记录
+					insert into stuinfo values(1,'张三丰',300),(2,'张无忌',28);
+				2. insert into 表名(字段1,字段2,..) values(值1),(值2),..;
+					et :
+						insert into stuinfo(name,age) values('小昭',20),('敏敏',20);
+			2. 查询数据(select)
+				1. select * from 表名; 
+					//查询表中所有数据
+				2. select * from 表名 where 条件;
+					//查询表中满足条件的数据
+				3. select 字段1,字段2 from 表名 [where 条件];
+					注意 : []表示可选添加
+			练习 :
+				1. 查看所有的库
+					show databases;
+				2. 创建新库 studb
+					create database studb character set utf8;
+				3. 在库中创建表tab1,指定字符集utf8,设置字段id name age
+					use studb;
+					create table tab1(id int,name char(10),age int)character set utf8;
+				4. 查看表结构
+					desc tab1;
+				5. 在tab1中插入两条记录
+					insert into tab1 values(1,'Jack',20),(2,'Rose',20);
+				6. 在tab1中name,age两个字段中插入两条记录
+					insert into tab1(name,age) values('Tom',100),('Jerry',100);
+				7. 查看表中所有记录
+					select * from tab1;
+				8. 查看表中年龄大于30的数据
+					select * from tab1 where age > 30;
+	4. 更改默认字符集
+		1. 方法 : 修改mysql的配置文件
+		2. 步骤 :
+			1. 获取root权限
+				sudo -i
+			2. cd /etc/mysql/mysql.conf.d/
+			3. 备份(相当重要)
+				cp mysqld.cnf mysqld.cnf.bak
+			4. 修改
+				使用sublime修改 :
+					subl mysqld.cnf
+					找到 [mysqld]
+					添加 character_set_server = utf8
+				使用vi修改文件 :
+					vi mysqld.cnf
+					找到 [mysqld]
+					添加 character_set_server = utf8
+			5. 重启mysql服务
+				sudo /etc/init.d/mysql restart
+			6. 连接客户端 
+				mysql -uroot -p123456
+			7. MAC 电脑
+				文件路径
+					/etc/my.cnf
+					[mysqld]
+					character_set_server = utf8
+5. 数据类型
+	1. 数值类型
+		1. 整型
+			1. int 大整型(4个字节)
+				取值范围 : 0 ~ 2(32)-1
+			2. tinyint 微小整型(1个字节)
+				1. 有符号整型(默认) 
+					取值范围 -128 ~ 127
+					id tinyint signed
+				2. 无符号整型(unsigned)
+					取值范围 0 ~ 255
+					age tinyint unsigned 
+			3. smallint 小整型 (2字节)
+			4. bigint 	极大整型 (8字节)
+		2. 浮点型
+			1. float(4个字节,最多显示7个有效位)
+				1. 用法
+					字段名 float(m,n) 
+					m表示总位数,n表示小数位的位数
+					et :
+						score float(3,1)
+			2. double(8个字节)
+				float 是单精度 误差更大
+				double 是双精度 误差稍小,在mysql内部运算时,都采用double运算
+			3. decimal(最多可显示28个有效位)
+				用法 :
+					decimal(m,n)
+					m表示总位数,n表示小数位位数
+		3. 数值类型占用的存储空间
+			整数和小数分开存储的,需要各自计算所需的字节数
+			规则 :
+				将9的倍数包装成4个字节
+			余数占用字节对照表
+				余数 		字节
+				0			0
+				1-2			1
+				3-4			2
+				5-6			3
+				7-8			4
+			et:
+				decimal(19,9)
+				计算存储空间 :
+					1. 整数位数 除以 9, 
+						商表示占用4个字节,
+						余数,根据对照表判断占用几个字节
+						10 / 9 商 1 余数 1
+						占用字节数 4+1 = 5个字节
+					2. 小数位数 除以9
+						9 / 9 商 1 余数 0
+						占用字节数 4 + 0 = 4个字节
+		练习 :
+			1. 创建库studb2
+				create database studb2;
+			2. 在库中创建表stuinfo,要求 :
+				id  	大整型
+				name 	字符型,宽度是15
+				age 	微小整型,不能为负数
+				height 	浮点型,小数位为2位(float(5,2))
+				money 浮点型,小数位为2位(decimal(5,2))
+				et :
+					use studb2;
+					create table stuinfo(id int,name char(15),age tinyint unsigned,height float(5,2),money decimal(5,2));
+
+			3. 查看表结构
+				desc stuinfo;
+			4. 查看表的字符集
+				show create table stuinfo;
+			5. 插入1条完整记录,在表中id,name两个字段中插入两条记录
+				insert into stuinfo values(1, 'Jack',10,121.34,100.23);
+				insert into stuinfo(id,name) values(2,'Rose'),(3,'liming');
+			6. 查询所有记录
+				select * from stuinfo;
+			7. 查询所有学生的id和姓名
+				select id,name from stuinfo;
+
+
+
+	2. 字符类型
+		1. char(m)
+			m指定最大显示宽度,同时也指定最大字符个数
+			取值范围 1 ~ 255
+			特点 :
+				定长存储
+					char(10)
+					固定分配10个字符的空间存储数据
+		2. varchar(m)
+			m指定最大显示宽度,也制定最大字符个数
+			取值范围 : 1 ~ 65535
+			特点  :
+				变长存储
+					varchar(10)
+					根据数据的实际长度分配空间,小于10个字符,按照实际的字符数分配空间,
+					最大可分配10个字符的空间.
+					超过10个字符的数据,无法存储,会报错
+		3. text / longtext(4G) / blob / longblob(4G)
+			text相关的类型可用来存储大批量的文本数据(博文等)
+			blob相关的类型更适用于二进制数据的存储(图片)
+		注意 :
+			1. 定长和变长字符类型在存储空间上区别较大,
+			  char 定长存储 : 浪费存储空间,但性能高
+			  varchar 变长存储 : 节省存储空间,但性能低
+			2. 字符类型的显示宽度与数值类型宽度的区别 :
+				et : int(11)
+					 char(10)
+				1. 数值类型的宽度为显示宽度,用于select查询是显示结果,和占用存储空间无关.
+					即使超出显示宽度,只要没有超出当前类型的取值范围,都可以插入成功
+				2. 字符类型的宽度不仅是显示宽度,还是最大字符个数,超出就无法存储
+				3. 数值类型如果指定显示宽度,而数据长度小于宽度,会自动补0,填充显示宽度.
+					结合zerofill 属性查看效果
+					id int(5) zerofill,
+
+
+
+
+
+
+
+
+
+
+
+
+
+	3. 枚举和集合
+	4. 日期和时间类型
+
+
+
+
+
+									  	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

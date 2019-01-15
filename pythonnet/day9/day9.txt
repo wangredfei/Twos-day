@@ -1,0 +1,149 @@
+前倾回顾
+
+1. 进程和线程的区别联系
+2. 服务器通信模型
+      循环模型 : 循环接收请求,每次处理一个
+      IO并发模型: 可以同时处理多个IO请求
+      多进程/线程并发: 针对每个客户端单独创建进程/线程
+
+3. 基于fork的多进程并发
+     ftp文件服务器
+*****************************************************
+
+基于threading的多线程并发
+
+     步骤:
+     1. 创建套接字,绑定,监听
+     2. 接收客户端连接
+     3. 创建新的线程处理客户单请求
+     4. 主线程继续等待其他客户端连接
+     5. 当客户端退出时处理对应线程
+
+
+集成模块完成多进程/线程socket并发
+
+python2  SocketServer
+python3  socketserver
+
+功能 : 通过模块提供的不同类的组合完成多进程或者多线程        的tcp/udp并发程序
+
+StreamRequestHandler     处理tcp请求
+DatagramRequestHandler   处理udp请求
+
+TCPServer   创建tcpserver
+UDPServer   创建udpserver
+
+ForkingMixIn   创建多进程
+ForkingTCPServer   ForkingMixIn + TCPServer
+ForkingUDPServer   ForkingMixIn + UDPServer
+
+ThreadingMixIn  创建多线程
+ThreadingTCPServer  ThreadingMixIn + TCPServer
+ThreadingUDPServer  ThreadingMixIn + UDPServer
+
+使用步骤:
+
+    1. 创建服务器类,通过选择继承模块中的TCPServer或者    UDPServer确定服务器类型,继承多进程或者多线程类    确定并发类型
+
+    2. 创建请求处理类,根据服务器类型选择继承流式套接    字处理还是数据报套接字处理
+
+    3. 通过服务器类创建服务器对象,并绑定处理类.
+
+    4. 通过服务器对象调用 serve_forever()启动服务
+
+    5. 当客户端发起请求后,会自动调用请求处理类中        handle()方法处理
+
+
+HTTPServer V2.0
+
+功能 : 1. 接收客户端请求
+       2. 解析客户端请求
+       3. 组织数据,形成http响应格式
+       4. 将响应内容回发给客户端
+
+升级:
+    1. 基本的请求解析,根据具体请求返回具体内容
+    2. 采用多线程并发,可以满足多个客户端的同时访问
+    3. 除了网页也可以获取一些简单数据
+    4. 使用类进行httpserver封装
+
+技术点 : 
+    * 使用 tcp套接字   socket多线程并发
+    * 类的封装 : 使用类实例化对象,对象调用启动接口
+    * http请求和响应格式
+
+       请求:
+            请求行  GET  /abc.html  HTTP/1.1 
+	    请求头
+	    空行
+	    请求体
+       
+       响应:
+            响应行  HTTP/1.1   200  OK 
+	    响应头
+	    空行
+	    响应体  具体内容
+
+
+协程
+
+定义 :  纤程,微线程.是为非抢占式多任务产生子程序的计         算机程序组件.
+        协程允许不同入口点,在不同位置暂停或者开始执行,简单来说,协程就是可以暂停执行的函数
+
+* yield 是实现协程的基本关键字
+
+
+协程原理: 记录一个函数栈的上下文,进行协程的切换调度.           当一个协程函数暂停执行时会将上下文栈帧保存           起开,在切换回来时恢复到原来的执行位置,从而           继续执行
+
+协程优点:
+    1. 协程可以同时处理多个任务
+    2. 协程本质是单线程,资源消耗少
+    3. 协程无需切换的开销,无需同步互斥
+协程缺点:
+    1. 无法利用计算机多核
+
+greenlet
+    安装:  sudo  pip3 install  greenlet
+
+    g = greenlet.greenlet(func)
+    功能 : 创建协程对象
+    参数 : 协程函数
+
+    g.switch()
+    功能 : 启动协程函数
+
+
+gevent 
+    安装:  sudo  pip3 install  gevent
+
+    gevent.spawn(func,argv)
+    功能 : 生成协程对象
+    参数 : func 协程函数
+           argv 给协程函数传参
+    返回值 : 返回协程对象
+
+    * 当func函数中遇到gevent类型阻塞则会跳出
+
+    gevent.joinall(list,[timeout])
+    功能 : 阻塞等待回收协程
+    参数 : list  协程对象列表
+           timeout 超时时间
+    
+    gevent.sleep(sec):
+    功能: 提供协程阻塞
+
+    from gevent import  monkey 
+    monkey.patch_all()
+
+    功能: 修改原有的IO阻塞行为,可以出发协程事件跳转
+
+    * 必须在模块导入前设置
+
+
+作业 :  1. 总结进程线程网络内容知识点
+        2. 复习 pymysql 使用
+        3. 看 ftp 和 聊天室 思维流程
+	4. httpserver 第二版 
+
+
+

@@ -1,0 +1,246 @@
+ Day04回顾
+1. 主键&&自增长(PRI,不能重复,不能为NULL)
+  1. 创建
+    id int primary key auto_increment,
+    alter table 表名 add primary key(字段名);
+  2. 删除
+    1. alter table 表名 modify id int;
+    2. alter table 表名 drop primary key;
+  3. 指定起始值
+    1. create table 表名(...)auto_increment=1000;
+    2. alter table 表名 auto_increment=1000;
+2. 外键
+  1. 使用规则
+    1. 数据类型要一致
+    2. 主表被参考字段必须为KEY的一种 : PRI
+  2. 语法格式
+    constraint 外键名 foreign key(字段)
+    references 主表(字段)
+    on delete 级联动作
+    on update 级联动作
+  3. 级联动作
+    1. cascade : 删除 更新同步(被参考字段)
+    2. restrict(默认) : 不让主表删除 更新
+    3. set null : 删除 更新,从表该字段值设置为NULL
+  4. 删除
+    1. show create table 表名;
+    2. alter table 表名 drop foreign key 外键名;
+3. 锁 : 解决客户端并发访问的冲突问题
+  1. 锁分类
+    1. 锁类型 : 读锁 写锁
+    2. 锁粒度 : 行级锁 表级锁
+4. 存储引擎
+  mysql> show engines;
+  mysql> show create table 表名;
+  mysql> create table 表名(...)engine=MyISAM;
+  mysql> alter table 表名 engine=InnoDB;
+5. 常用存储引擎
+  1. InnoDB : 支持外键 事务 行级锁 共享表空间
+  2. MyISAM : 支持表级锁,独享表空间
+  3. MEMORY : 表记录存储在内存中
+  4. 如何选择
+    查询操作多 : MyISAM
+    更新操作多 : InnoDB
+6. 数据备份和恢复
+  1. 备份 : mysqldump -uroot -p 源库名 > XXX.sql
+    --all-databases
+    库名
+    -B 库1 库2 库3
+    库1 表1 表2 表3
+  2. 恢复 : mysql -uroot -p 目标库名 < XXX.sql
+    --one-database
+    1. 先创建空库再恢复
+    2. 库中新增表不会删除,新增记录会被覆盖
+7. 用户授权
+  1. 开启远程连接
+    sudo -i
+    cd /etc/mysql/mysql.conf.d/
+    subl mysqld.cnf
+      # bind-address=127.0.0.1
+    /etc/init.d/mysql restart
+  2. 授权语句
+    mysql> grant all privileges on *.* to "lion"@"%" identified by "123456" with grant option;
+8. 数据导入
+  1. 创建对应表
+  2. 拷贝文件
+    mysql> show variables like "secure_file_priv";
+  3. 执行导入语句
+    load data infile "/var/..."
+    into table 表名
+    fields terminated by ":"
+    lines terminated by "\n"
+  4. 修改权限
+    chmod 644 文件名
+    r : 4 
+    w : 2
+    x : 1
+ 9. 数据导出
+   select ... from 表名 where 条件
+   into outfile "/var/..."
+   fields terminated by ","
+   lines terminated by "\n"
+*****************************************
+Day05笔记
+1. E-R模型(Entry-Relationship)
+  1. 定义 : 实体关系数据模型,用于数据库设计
+  2. 实体 : 描述客观事物的概念(1个人 1本书 1个学生)
+    1. 表示方法 : 矩形框
+  3. 属性 : 实体具有的某种特性
+    学生 : 学号 姓名 年龄 性别 专业 ... ...
+    表示方法 : 椭圆形
+  4. 关系 : 实体之间的关系
+    1. 一对一(1:1) : 老公对老婆
+      A中1个实体,B中只能有1个实体与其发生关联
+      B中1个实体,A中也只能有1个实体与其发生关联
+    2. 一对多(1:n) : 父亲对孩子
+    3. 多对多(m:n) : 兄弟姐妹对兄弟姐妹
+  5. 数据库三范式
+    1. 第一范式(1NF) : 列不可拆分
+    2. 第二范式(2NF) : 唯一标识
+    3. 第三范式(3NF) : 引用主键
+    后1个范式,都是在前1个范式的基础上建立的
+  6. 数据库关系实现
+    1:1 实现 : 主外键关联,添加唯一约束
+    1:n 实现 : 主外键关联
+    m:n 实现 : 通过中间表实现
+2. 事务和事务回滚
+  1. 定义 : 一件事从开始发生到结束的过程
+  2. 作用 : 确保数据的一致性
+  3. 应用
+    1. 开启事务
+      mysql> begin;
+    2. 终止事务
+      mysql> commit;  |   rollback;
+    3. 案例
+      1. 背景
+        你 : 建行卡
+	你朋友 : 工商卡
+	你到建行自动取款机给你朋友转5000
+      2. 建表
+        表1 : CCB   name money
+	表2 : ICBC  name money
+      3. 转账过程
+        mysql> 点击转账按钮
+	mysql> begin;
+	mysql> update CCB set money=money-5000 where name="有钱人";
+	mysql> update ICBC set money=money+5000 where name="穷人";
+	mysql> commit;  转账成功
+    4. 注意
+      事务只针对于表记录操作(增删改)有效,对于库和表的操作无效
+3. 与Python交互
+  1. python3 : pymysql(模块名)
+     python2 : MySQLdb(模块名)
+  2. 安装
+    1. 在线 : sudo pip3 install pymysql
+              sudo pip install mysql-python
+    2. 离线 : pymysql-0.9.1.tar.gz
+      $ tar -zxvf pymysql-0.9.1.tar.gz
+      $ cd pymysql0.9.1
+      $ sudo python3 setup.py install
+  3. 环境准备
+    1. 创建库 db5 , utf8
+      create database db5 charset utf8;
+    2. 创建表 t1
+      use db5;
+      create table t1(
+      id int primary key auto_increment,
+      name varchar(20),
+      score float(5,2)
+      );
+    3. 在表中插入3条记录
+      insert into t1(name, score) values
+      ("李白",60),("杜甫",75),("白居易",80);
+  4. pymysql使用流程
+    1. 数据库连接对象 : db = pymysql.connect(...)
+    2. 游标对象 : cur = db.cursor()
+    3. 执行命令 : cur.execute('sql命令')
+    4. 提交     : db.commit()
+    5. 关闭游标 : cur.close()
+    6. 断开连接 : db.close()
+  5. pymysql.connect()参数
+    1. host     : 主机地址    host="localhost"
+    2. user     : 用户名      user="root"
+    3. password : 密码        password="123456"
+    4. database : 库名        database="db5"
+    5. charset  : 字符集(推荐utf8) charset="utf8"
+    6. port     : 端口号(3306)     port=3306
+  6. 数据库连接对象(db)的方法
+    1. db.cursor()   : 创建游标对象
+    2. db.commit()   : 提交到数据执行
+    3. db.rollback() : 回滚
+    4. db.close()    : 断开与数据库连接
+  7. 游标对象(cur)的方法
+    1. cur.execute(sql命令) : 执行sql命令
+      cur.execute(sql,[]) : 第二个参数一定要为列表
+    2. cur.close()          : 关闭游标对象
+    3. cur.fetchone()       : 取1条(查询语句) 元组
+    4. cur.fetchmany(n)     : 取n条 大元组中有小元组
+    5. cur.fetchall()       : 取所有 大元组,有小元组
+      # fetchall()如果只有1个记录,((5,"小姐姐",100),)
+      result=((5,"小姐姐",100),)
+      result[0][1]
+4. MySQL调优
+  1. 选择合适的存储引擎
+    1. 读操作多 : MyISAM
+    2. 写操作多 : InnoDB
+  2. 创建索引
+    在select where  order by常涉及到的字段建立索引
+  3. SQL语句优化(避免全表扫描)
+    1. where子句中,不使用!=,否则放弃索引全表扫描
+    2. 尽量避免NULL判断,否则...
+      优化前 : select num from t1 where num is null;
+      优化后
+        在num字段上设置默认值0,确保num字段无空值
+	select num from t1 where num=0;
+    3. 尽量避免 or 连接条件,否则... ...
+      优化前 : select id from t1 where id=10 or id=20
+      优化后 :
+        select id from t1 where id=10
+	union all
+	select id from t1 where id=20;
+    4. 模糊查询尽量避免使用前置%,否则...
+      select name from t1 where name like "%c%";
+    5. 尽量避免使用 in 和 not in
+      select id from t1 where id in(1,2,3,4);
+      用 between 1 and 4 代替
+    6. 尽量避免使用 select * ... ,不要返回用不到的任何字段
+5. WorkBench图形化界面管理工具
+   Navicat
+     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

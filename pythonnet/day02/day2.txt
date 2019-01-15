@@ -1,0 +1,219 @@
+
+1. osi七层模型  tcp/ip模型
+2. 三次握手和四次挥手
+3. tcp udp区别
+
+网络概念 : 主机  IP地址  端口   域名
+
+套接字 : 网络编程方式
+         流式套接字 : tcp
+	 数据报套接字: udp
+
+tcp套接字 : 
+服务端
+socket()-->bind()-->listen()-->accept()-->
+recv()/send()-->close()
+
+客户端
+socket()-->connect()-->recv()/send()-->close()
+
+*****************************************************
+
+tcp 传输特征
+1. 当一端退出时,如果连接端阻塞在recv,此时recv会立即结    束阻塞返回空字串.
+2. 如果连接端关闭,再调用send企图发送时会出现Broken      Pipe异常
+
+
+网络收发缓冲区
+
+1. 减少和磁盘的交互次数
+2. 协调收发速度
+
+* send和recv实际是向缓冲区发送,从缓冲区接收
+* 当缓冲区满时send会阻塞,接收缓冲区空时recv阻塞
+
+
+tcp粘包
+
+1. tcp套接字是以字节流的方式传输消息,没有消息边界
+2. 多次发送的内容被一次接收
+
+影响 : 如果每次发送内容是一个独立含义的个体,此时如果        粘包会产生影响
+
+处理粘包:
+    1. 人为添加消息边界
+    2. 将消息结构化
+    3. 控制消息发送速度
+
+基于UDP套接字服务端
+
+1. 创建数据报套接字
+    sockfd = socket(AF_INET,SOCK_DGRAM)
+
+2. 绑定地址
+    sockfd.bind(addr)
+
+3. 消息收发
+    data,addr = sockfd.recvfrom(buffersize)
+    功能: 接收UDP消息
+    参数: 每次最多接收消息的大小
+    返回值: data  接收到的消息
+            addr  消息发送方的地址
+
+    n = sockfd.sendto(data,addr)
+    功能 : 发送udp消息
+    参数 : data  要发送的内容
+           addr   目标地址
+    返回值:发送字节数
+
+4. 关闭套接字
+   sockfd.close()
+
+udp客户端:
+1. 创建udp套接字
+2. 消息收发
+3. 关闭套接字
+
+cookie 
+   import  sys
+   sys.argv属性 : 用于获取命令行传入参数
+
+tcp套接字和udp套接字区别
+1. tcp套接字以字节流方式传输,数据报套接字以数据报形    式传输
+2. tcp传输会有粘包,udp不会(有消息边界)
+3. tcp传输保证传输可靠性,udp则会有部分消息丢失的可能
+4. tcp需要listen accept 保证连接,udp不需要
+5. tcp使用send,recv收发消息,udp使用sendto recvfrom
+
+补充函数:
+    sendall(data)
+    功能 : 发送tcp消息
+    参数 : 发送的内容bytes
+    返回值 : 发送成功返回None 失败产生异常
+
+
+套接字对象属性
+
+sockfd.family  获取套接字地址族类型
+sockfd.type    获取套接字类型
+
+sockfd.getsockname()  获取套接字绑定地址
+
+sockfd.fileno()  获取套接字的文件描述符
+
+文件描述符 : 系统中给每一个IO操作分配的唯一的整数,用              于管理IO.这个整数即这个IO的文件描述符
+
+sockfd.getpeername()  获取连接端的地址信息
+
+sockfd.setsockopt(level,option,value)
+功能 : 设置套接字选项,丰富或者修改套接字属性功能
+参数 : level   要设置的套接字选项类别  SOL_SOCKET
+       option  选择每个类别中具体的选项
+       value   要设置的值
+
+sockfd.getsockopt(level,option)
+功能 : 获取套接字选项值
+参数 : level   要获取的套接字选项类别 
+       option  选择每个类别中具体的选项
+返回值: 获取的值
+
+
+udp通信--->广播
+
+广播 : 一点发送,多点接收 
+广播地址: 192.168.56.255 (通常为每个网段的最大地址)
+
+设置可以发送接收广播
+s.setsockopt(SOL_SOCKET,SO_BROADCAST,1)
+
+广播风暴 : 一个网络中存在大量广播会占有较多带宽,对网            络产生影响
+
+TCP通信 --> http协议通信
+
+http协议 (超文本传输协议) 应用层协议
+
+用途 : 网页的获取
+       数据的传输
+
+特点 : 
+    1. 应用层协议,传输层采用tcp方式收发消息
+    2. 简单,灵活,很多语言都有http协议接口
+    3. 无状态的协议,协议本身不要求记录传输数据
+    4. http1.1 支持持久连接
+
+网页请求过程:
+1. 客户端(浏览器)通过tcp传输,发送http请求给服务器
+2. 服务器收到http请求后进行解析
+3. 服务端处理具体请求内容,整理需要的数据
+4. 将数据以http响应的格式回发给客户端(浏览器)
+5. 浏览器接收响应,显示内容
+
+
+http请求 (request)
+
+    请求格式
+        请求行 : 具体的请求类别和请求内容
+	    格式 :   GET        /        HTTP/1.1
+	           请求类别  请求内容   协议版本
+           
+	    请求类别  每种类别代表作不同的事情
+	      GET      获取网络资源
+	      POST     提交一定的信息,得到反馈
+	      HEAD     获取网络资源的响应头
+	      PUT      更新服务器资源
+	      DELETE   删除服务器资源
+	      CONNECT  预留
+	      TRACE    测试
+	      OPTIONS  获取服务器信息
+
+	请求头 : 对请求内容的基本描述
+            Accept-Encoding: gzip, deflate, br
+            Accept-Language: zh-CN,zh;q=0.9
+            Cache-Control: max-age=0
+            Connection: keep-alive
+	空行
+	请求体 ： 请求参数和提交内容
+
+HTTP响应（response）
+
+    响应格式 
+        响应行 : 反馈响应的基本情况
+	    格式: HTTP/1.1    200      OK
+                  协议版本   响应码  附加信息
+  
+            响应码: 1xx   提示信息,请求被接收
+	            2xx   响应成功
+		    3xx   响应需要进一步操作,重定向
+		    4xx   客户端错误
+		    5xx   服务器错误
+
+	响应头 : 对响应内容的描述信息
+	    Cache-Control: private
+            Connection: Keep-Alive
+            Content-Encoding: gzip
+            Content-Type: text/html
+
+	空行
+	响应体 :  回复给客户端的具体内容
+
+要求 : 
+     1. 知道http协议的作用
+     2. 了解网页访问的基本流程
+     3. 掌握http协议 请求和响应的格式
+     4. 知道http请求的基本类型和响应码的含义
+
+练习 : 编写一个tcp客户端一个服务端,完成文件的传输
+
+
+作业 : 写一个简易的httpserver程序 ,将一个网页发送给        浏览器显示
+       复习函数的使用和类的使用
+
+
+
+
+
+
+
+
+
+

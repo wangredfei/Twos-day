@@ -1,0 +1,341 @@
+MongoDB  (芒果数据库)
+
+
+数据存储阶段
+
+    文件管理阶段 (.txt  .doc   .xls)
+
+    优点 : 数据可以长期保存
+           存储数据量大
+	   使用简单
+    
+    缺点 : 数据的存储结构随意
+           数据的查找,修改效率低
+	   不方便扩展和自动化处理
+    
+    数据库管理阶段
+
+    优点 : 数据格式化存储,便于操作
+           降低数据的冗余,提高操作效率
+	   方便程序调用
+    缺点 : 使用需要特定的语句或者命令
+
+几个概念
+
+    数据: 能够输入到计算机中并被识别处理的信息集合
+
+    数据结构: 研究一个数据集合中,数据之间关系的学科
+
+    数据库: 按照数据结构,存储管理数据的仓库.数据库是         在数据库管理系统管理控制下,在一定介质上创         建的数据集合
+
+    数据库管理系统 : 数据库管理软件,用户维护建立数据                  库
+
+    数据库系统 : 由数据库及管理系统,开发工具等构成的              集合
+
+
+关系型数据库
+
+    采用关系模型来组织数据结构的数据库(二维表)
+    e.g. Oracle   DB2   SQLServer  MySql  SqLite
+
+    优点: 1. 容易理解,逻辑类似常见的表格
+          2. 使用方便,都是用sql语句进行数据操作,sql语    句很成熟
+	  3. 数据一致性高,冗余低,完整性好
+	  4. 技术成熟,可以使用表的外键关联等操作 
+    
+    缺点: 1. 每次数据操作都需要sql解析,消耗较大
+          2. 关系型数据库内部往往进行加锁处理,也影响    处理速度
+	  3. 不能很好的处理海量数据的高并发需求,读写    能力差
+	  4. 由于数据的一致性等规定,导致灵活性不高
+
+   	
+非关系型数据库  (NoSql-->Not only sql)
+
+    优点 : 并发能力强,读写速度快,可以更好的应对海量数        据并发
+           使用灵活,容易扩展
+
+    缺点 : 通用性差,没sql那样的统一语句
+           技术成熟度比关系型数据库低,没有外键等复杂操作
+
+    Nosql 分类:
+        键值型数据库: Redis
+	列存储数据库: HBase
+	文档型数据库: MongoDB
+	图形数据库: Graph
+
+    Nosql使用情况:
+        1. 对数据一致性要求低
+	2. 需要应对高并发的海量数据存储
+	3. 比较容易建立非关系模型
+ 
+
+MongoDB数据库
+
+特点 :  1. 由c++编写的数据库管理系统
+        2. 支持丰富的增删改查操作
+	3. 有丰富的数据存储类型,技术相对成熟
+	4. 支持众多的编程语言接口
+	5. 使用方便,便于部署扩展
+
+
+MongoDB的安装
+
+     linux : sudo  apt-get install mongodb
+
+     安装位置: /var/lib/mongodb 
+     配置文件: /etc/mongodb.conf 
+     命令集: /usr/bin
+
+     手动安装: 1. www.mongodb.com 下载对应系统的安装              包
+
+               2. 将下载的安装包安装即可 
+
+	          压缩包解压到  /usr/local 目录
+	          安装包 : sudo dpkg -i  xxxx.deb
+	       
+	       3. 添加环境变量
+	          PATH=$PATH:/opt/mongodb/bin
+		  export  PATH
+
+		  将以上两句放到 ~/.bashrc
+
+MongoDB 命令
+
+    数据库设置命令 :  mongod
+
+        设置数据库存储位置
+        mongod --dbpath  目录
+
+	设置端口号
+	mongod  --port   端口
+
+	* mongodb默认端口 27017
+
+     启动mongo shell : mongo
+
+         退出 :  ctrl-c    quit()
+
+
+mongodb数据库结构
+
+键值对 --> 文档  --> 集合 --> 数据库
+
+-------------------------
+ ID   |   NAME   |   AGE
+-------------------------
+ 1    |   Lily   |   18
+-------------------------
+ 2    |   Lucy   |   17
+-------------------------
+{
+  "_id":1,
+  "NAME":'Lily',
+  "AGE":18
+},
+{
+  "_id":2,
+  "NAME":'Lucy',
+  "AGE":17
+}
+
+   mysql       mongodb      含义
+
+ database      database    数据库
+
+  table        collection  表/集合
+
+  column       field       字段/域
+  
+  row          document    记录/文档
+
+  index        index       索引
+
+
+创建数据库
+    
+    use database
+
+    e.g.  创建一个叫stu的数据库
+          use  stu
+    
+    * use实际是选择一个数据库.当这个数据库不存在时会   自动创建
+
+    * 使用use创建数据库,并不会马上创建,而是当插入数   据时才会真正被创建
+
+    查看数据库: show  dbs
+
+    
+    命名规则:
+        1. 使用utf-8字符
+	2. 不能含有空格  .  /  \  '\0'字符
+        3. 长度不超过64字节
+	4. 不要和系统数据库重名 
+
+    全局变量db : 代表当前正在使用的数据库
+    
+    * 如果不选择任何数据库,db默认为test
+
+    删除数据库:  db.dropDatabase()  删除当前数据库
+
+
+数据库的备份和恢复
+
+    备份命令 : mongodump -h dbhost -d dbname -o dir
+
+    e.g.  备份本机数据库 stu 到 student目录下
+         mongodump -h 127.0.0.1 -d stu -o student
+
+    数据库文件恢复:
+        mongorestore -h dbhost:port -d dbname  dir
+
+    e.g.恢复stu目录下的数据到当前主机的student数据库
+     mongorestore -h 127.0.0.1:27017 -d student ./stu
+
+
+数据库监控命名
+    mongostat   查看数据库运行状态
+
+    insert query update delete: 每秒执行增查该删次数
+    command : 每秒mongodb命令次数
+    flushes : 和磁盘交互情况
+    vsize : 使用的虚拟内存
+    res :  物理内存
+    time : 时间
+
+    mongotop   检测每个数据库中数据集合的读写情况
+
+        ns  : 集合
+        total : 总时长
+	reas : 读时长
+	write : 写时长
+
+创建集合
+
+    方法1 : db.createCollection(collection)
+
+       e.g. 创建一个名为class1的集合
+            db.createCollection('class1')
+
+    方法2 : 当插入数据时,需要指定集合,如果集合不存在         则自动创建
+
+       e.g. 创建一个名为class2的集合
+           db.class2.insert({'name':'Lucy','age':17})
+
+    查看数据库中集合:
+        show collections
+	show tables
+    
+    集合命名规则:
+        1. 使用utf-8字符
+	2. 不能含有 \0 字符
+	3. 不要以 system. 开头,这是系统集合名
+	4. 不要和关键字重复
+  
+    删除集合 : db.collection.drop()
+
+        e.g.  删除class2集合
+              db.class2.drop()
+
+    集合重命名:
+        db.collection.renameCollection('new_name')
+
+        e.g.  将class集合改名为class0
+	     db.class.renameCollection("class0")
+
+
+文档
+    什么是文档?
+        * 文档是mongodb数据库中基本的数据组成形式
+	* 文档是由键值对构成,每个键值对表达一项数据
+	* mongodb中文档为bson数据类型
+    
+    键 : 即文档的域,表示值是什么内容
+
+         命名规则: 
+	     1. 使用utf-8字符串
+	     2. 不能有\0
+	     3. 一个文档中的键不能重复
+	     4. 通过键取值,但是键值对位置不同认为是    不同文档
+	
+    值 : 即数据库存储的数据
+
+        类型           值
+
+	数字           整数,小数
+	布尔类型       true  false
+	Array          数组
+	String         字符串
+	Binary data    二进制字串
+	date           时间类型
+	Timestamp      时间戳
+	Null           空  null
+	Object         对象 内部文档
+	regex          正则表达式
+	code           js代码
+	ObjectId       ObjectId字串
+
+ObjectId : 
+   "_id" : ObjectId("5bf8ef43c365c39876c13e13")
+
+   _id :插入文档是自动添加的文档主键域
+   值 : ObjectId类型数据,保证和其他的主键值不重复
+       24位16进制码 
+       8位文档创建事件,6位机器id,4位进程id,6位计数器
+    
+
+集合中的文档 
+   1. 每个集合中的文档格式可以不同(域名称,多少,种类)
+   2. 一个集合中的文档尽量体现相同的存储内容
+   3. 文档的表达层次尽量不要过于复杂
+
+插入文档
+
+    插入单个文档: db.collection.insertOne()
+                  功能: 插入一条文档
+                  参数: 要插入的文档
+
+    e.g. 向class0中插入一条文档
+    db.class0.insertOne({'name':'Joy','age':18,'sex':'m'})
+
+    * db.class0.find() 查看插入结果
+    * 操作数据时键的引号可以省略
+    * _id可以自定义值,但是不能重复
+    * 一个集合中的文档是有序的
+
+    插入多条文档: db.collection.insertMany([{},{}..])
+                  功能: 同时插入多条文档
+		  参数: 数组中包含多个文档
+
+    e.g. 同时插入两条文档
+     db.class0.insertMany([{name:'Tom',age:19,sex:'m'},{name:'Jame',age:18,sex:'m'}])
+
+
+    插入文档 :  db.collection.insert()
+                功能: 插入文档
+		参数: 同insertOne + insertMany
+
+    e.g. 可以插入一条或者多条文档
+         db.class0.insert({"name":'Lily',age:17,sex:'w'})
+
+
+save插入文档
+
+    db.collection.save()
+    功能: 插入文档,用法同insert()
+    参数: 同insert()可以插入一条或者多条文档
+
+    e.g. 如果指定的_id值存在,则替换原文档  
+    db.class0.save({_id:1,name:'Tony',age:18})
+
+
+获取集合对象
+    db.getCollection(collection_name)
+    功能: 获取集合对象
+
+    e.g.
+    db.getCollection('class0') ==> db.class0
+
+作业: 复习下mysql数据库操作
+      对比关系型和非关系型数据库差别
+      复习mongodb命令
+

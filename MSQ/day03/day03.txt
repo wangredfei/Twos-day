@@ -1,0 +1,332 @@
+Day02回顾
+1.数据类型
+  1.数值类型
+  2.字符类型
+  3.枚举类型
+    1.字段名 enum(值1,值2)
+    2.字段名 set(值1,值2)
+  4.日期时间类型
+    1.date
+    2.time
+    3.datetime  # 不给值默认NULL
+    4.timestamp # 不给值默认返回系统当前时间
+2.日期时间函数
+  1.NOW()
+  2.CURDATE()
+  3.CURTIME()
+  4.YEAR(字段名)
+  5.DATE(字段名)
+  6.TIME(字段名)
+3.日期时间运算
+  select ... from 表名
+  where 字段名 运算符(now()-interval 时间间隔单位);
+  1 day | 2 day | 3 month
+4.表字段操作
+  1.添加(add)
+    alter table 表名 add 字段名 数据类型 first|after .
+  2.修改(modify)
+    alter table 表名 modify 字段名 新数据类型;
+  3.删除(drop)
+    alter table 表名 drop 字段名;
+  4.表重命名(rename)
+    alter table 表名 rename 新表名;
+  5.表字段重命名(change)
+    alter table 表名 change 原名 新名 数据类型;
+5.表记录管理
+  1.删除(delete)
+    delete from 表名 where 条件;
+  2.修改(update)
+    update 表名 set 字段1=值1,字段2=值2 where 条件;
+6.总结
+         表字段               表记录
+  增       add                insert into 表名
+  删       drop               delete from 表名
+  改       modify             update 表名 set ...
+  查       desc               select * from 表名 ...
+7.运算符
+  1.数值&&字符&&逻辑比较
+    1.数值 : > >= < <= = !=
+    2.字符 : = !=
+    3.逻辑 : and  or
+  2.范围内比较
+    1.between 值1 and 值2
+    2.in(值1,值2,值3)
+    3.not in(值1,值2,值3)
+  3.空 非空
+    1. is NULL
+    2. is not NULL
+  4.模糊比较
+    字段名 like "%_"
+8.SQL查询
+  1.order by 字段名 ASC/DESC
+  2.limit
+    1. limit n
+    2. limit m,n
+    3. 分页
+      每页显示m条记录,显示第n页的内容
+      limit (n-1)*m,m
+  4.聚合函数
+    avg(..) sum(...) max(...) min(...)
+    count(...)
+    ## 空值NULL不会被统计
+***********************************
+Day03笔记
+1. SQL查询
+  1.总结
+    3. select .... 聚合函数 from 表名
+    1. where ...
+    2. group by ...
+    4. having ...
+    5. order by ...
+    6. limit ...;
+  2. 聚合函数
+    1. 分类
+      avg(字段名)
+      sum(字段名)
+      max(字段名)
+      min(字段名)
+      count(字段名) : 统计该字段记录的个数
+    2.攻击力最大值是多少?
+      select max(gongji) from sanguo;
+    3.统计id name两个字段分别有几条记录?
+      select count(id),count(name) from sanguo;
+      # 空值NULL不会被统计,""会被统计
+    4.统计蜀国英雄中攻击力大于200的英雄的数量
+      select count(id) as number from sanguo where country="蜀国" and gongji>200;
+  3. group by : 给查询的结果进行分组
+    1. 示例
+      1. 计算每个国家的平均攻击力
+         select country,avg(gongji) from sanguo 
+	 group by country;
+        先分组    再聚合      最后去重
+
+	  蜀国
+	  蜀国
+	  蜀国       578.25      蜀国
+	  魏国
+	  魏国       378.25      魏国
+	  吴国       178.25      吴国
+      2. 查找所有国家的男英雄中,英雄数量最多的国家前2名,显示国家名称和英雄数量
+        
+	1. 过滤男英雄
+	2. 每个国家有几个男英雄
+	3. 排序 + limit
+
+	3. select country,count(id) from sanguo
+	1. where sex="男"
+	2. group by country
+	4. order by count(id) desc
+	5. limit 2;
+    2. 注意
+      1.如果select后字段和group by之后不一致,则必须对该字段进行聚合处理(聚合函数)
+  4. having : 对分组聚合后的结果进行进一步筛选
+    1. 示例
+      找出平均攻击力大于105的国家的前2名,显示国家名称和平均攻击力
+        select country,avg(gongji) from sanguo
+        group by country
+        having avg(gongji)>105
+        order by avg(gongji) DESC
+        limit 2;
+    2. 注意
+      1. having语句通常与group by语句联合使用
+      2. having语句的存在弥补了where关键字不能与聚合函数联合使用的不足,where只能操作表中实际存在的字段
+  5. distinct : 不显示字段的重复值
+    1. 表中都有哪些国家
+      select distinct country from sanguo;
+      select distinct country,name from sanguo;
+    2. 注意
+      1. distinct和from之间所有字段都相同才会去重
+      2. distinct不能对任何字段做聚合处理
+  6. 查询表记录时可以做数学运算
+    1. 运算符 : + - * / %
+    2. 示例
+      查询时所有英雄攻击力翻倍
+        select name,gongji*2 as xgj from sanguo;
+2. 嵌套查询(子查询)
+  1. 定义 : 把内层的查询结果作为外层的查询条件
+  2. 语法
+    select ... from 表名 where 字段名 运算符(查询);
+    select * from sanguo where id in(select ...)
+    select * from sanguo where (id,name) in();
+  3. 示例
+    1. 把攻击值小于平均攻击值的英雄名字和攻击值显示出来
+      select name,gongji from sanguo where gongji<(select avg(gongji) from sanguo);
+    2. 找出每个国家攻击力最高的英雄名字和攻击值
+      # 有BUG
+        select name,gongji from sanguo
+        where gongji in
+        (select max(gongji) from sanguo group by country);
+      # 完美
+	select name,gongji from sanguo
+	where (country,gongji) in
+	(select country,max(gongji) from sanguo group by country);
+3. 多表查询
+  1. 两种方式
+    1. 笛卡尔积(不加where条件)
+      select 字段1,字段2 from 表1,表2;
+    2. 多表查询(加where条件)
+      ... from 表1,表2 where 条件;
+  2. 示例
+    1. 显示省 市详细信息
+      select sheng.s_name,city.c_name from sheng,city where sheng.s_id=city.cfather_id;
+    2. 显示省 市 县详细信息
+      select sheng.s_name,city.c_name,xian.x_name from MOSHOU.sheng,MOSHOU.city,MOSHOU.xian 
+      where sheng.s_id=city.cfather_id and city.c_id=xian.xfather_id;
+4. 连接查询
+  1. 内连接(多表查询等价,只显示符合条件的记录)
+    1. 语法格式
+      select 字段名 from 表1 inner join 表2 on 条件
+      inner join 表3 on 条件;
+    2. 示例
+      1. 显示省 市详细信息
+        select sheng.s_name,city.c_name from MOSHOU.sheng inner join MOSHOU.city on MOSHOU.sheng.s_id=MOSHOU.city.cfather_id;
+      2. 显示省 市 县详细信息
+        select sheng.s_name,city.c_name,xian.x_name from  sheng inner join city on sheng.s_id=city.cfather_id inner join xian on city.c_id=xian.XFATHER_ID;
+  2. 外连接
+    1. 左连接(left)
+      1. 定义 : 以左表为主显示查询结果
+      2. 示例
+        1. 显示省 市详细信息
+        2. 显示省 市 县详细信息,所有的市全都显示
+          select sheng.s_name,city.c_name,xian.x_name from 
+          sheng right join city
+          on sheng.s_id=city.cfather_id
+          left join xian
+          on city.c_id=xian.xfather_id;
+    2. 右连接(right)
+      以右表为主显示查询结果,用法同左连接
+5. 约束
+  1. 非空约束(not null)
+  2. 默认约束(default 默认值)
+6. 索引(BTREE)
+  1. 定义
+    对数据库中表的一列或者多列的值进行排序的一种结构
+  2. 优点
+    加快数据的检索速度
+  3. 缺点
+    1. 占用物理存储空间
+    2. 当对表中数据更新时,索引需要动态维护,占用系统资源,降低数据的维护速度
+  4. 索引示例
+    1. 开启运行时间监测
+      mysql> set profiling=1;
+    2. 执行1条查询命令(没有创建索引)
+      select name from t1 where name="lucy88888";
+    3. 在name字段创建索引
+      create index name on t1(name);
+    4. 再执行1条查询命令
+      select name from t1 where name="lucy99999";
+    5. 对比执行时间
+      mysql> show profiles;
+7. 索引分类
+  1. 普通索引(index) && 唯一索引(unique)
+    1. 使用规则
+      1.可设置多个字段
+      2.index无约束,unique字段值不能重复但可为NULL
+      3.把经常用来查询的字段设置为索引字段
+      4.index的KEY标志：MUL  unique ：UNI
+    2. 创建表时创建
+      create table 表名(
+      ... ...
+      index(name),
+      index(id),
+      unique(phnumber),
+      unique(cardnumber)
+      );
+    3. 已有表中创建
+      create [unique] index 索引名 on 表名(字段名);
+    4. 查看索引
+      1. desc 表名; ——> KEY标志
+      2. show index from 表名;
+    5. 删除
+      drop index 索引名 on 表名;
+
+
+  
+
+  
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Linux
+在线:
+  sudo pip3 install pymysql
+离线:
+  下载: XXX.tar.gz
+  解压: tar -zxvf XXX.tar.gz
+  cd XXX
+  sudo python3 setup.py install
+
+Windows
+  cmd
+  python -m pip install pymysql
+
+
+
+  
+
+      
+
+
+
+
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
